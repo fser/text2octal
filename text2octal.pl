@@ -21,7 +21,7 @@ sub subcalcul
     $octal;
 }
 
-sub bloc2octal
+sub block2octal
 {
     my $right = shift;
     my $octal = 0;
@@ -37,7 +37,7 @@ sub bloc2octal
     $octal;
 }
 
-sub bloc2struct
+sub block2struct
 {
     my ($r,$w,$x) = @_;
     my $res = { 'flag' => ($x eq 's' || $x eq 'S' || $x eq 't' || $x eq 'T') ? 1 : 0,
@@ -70,35 +70,31 @@ sub text2octal
                   }
     };
     
-    if (length($text)==10) {
-        $text = substr($text, 1, 9);
-    }
+    $text = substr($text, 1, 9) if (length($text)==10);
     
-    my $owner = substr($text, 0, 3);
-    my $group = substr($text, 3, 3);
-    my $other = substr($text, 6, 3);
-
-    my $r = bloc2struct(split //, $owner);
+    my $r = block2struct(split //, substr($text, 0, 3));
     $rights->{'setuid'} = 1 if ($r->{'flag'}==1);
     $rights->{'owner'} = $r->{'perm'};
     
-    $r = bloc2struct(split //, $group);
+    $r = block2struct(split //, substr($text, 3, 3));
     $rights->{'setgid'} = 1 if ($r->{'flag'}==1);
     $rights->{'group'} = $r->{'perm'};
 
-    $r = bloc2struct(split //, $other);
+    $r = block2struct(split //, substr($text, 6, 3));
     $rights->{'sticky'} = 1 if ($r->{'flag'}==1);
     $rights->{'other'} = $r->{'perm'};
 
-    bloc2octal $rights;
+    block2octal $rights;
 }
 
-die('usage: text-based-right*') unless scalar(@ARGV)>0;
+
+
+die('usage: text-based-right [ text-based-right, ... ]') unless scalar(@ARGV)>0;
 my @output = ();
 
 push(@output, {'txt' => $_, 'oct' => text2octal($_)}) foreach (@ARGV);
 
 foreach (@output)
 {
-    print "$_->{'txt'} $_->{'oct'}\n";
+    printf("%10s %4d\n", $_->{'txt'}, $_->{'oct'});
 }
